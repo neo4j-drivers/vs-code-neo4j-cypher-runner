@@ -10,14 +10,43 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:neo4j-cypher-runner.run-query"
+    "onCommand:neo4j-cypher-runner.run-query",
+    "onCommand:neo4j-cypher-runner.select-database"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "neo4j-cypher-runner.run-query",
-        "title": "Neo4j Cypher: Run Query"
+        "title": "Neo4j Cypher Runner: Run Query"
+      },
+      {
+        "command": "neo4j-cypher-runner.select-database",
+        "title": "Neo4j Cypher Runner: Select Database"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Neo4j Cypher Runner",
+        "properties": {
+          "neo4j-cypher-runner.databases": {
+            "type": "list",
+            "title": "Databases",
+            "default": [
+              {
+                "name": "My DB",
+                "url": "neo4j://localhost",
+                "authToken": {
+                  "principal": "neo4j",
+                  "credentials": "pass",
+                  "scheme": "basic"
+                }
+              }
+
+            ],
+            "description": "Complete functions with their parameter signature."
+          }
+        }
       }
     ]
   },

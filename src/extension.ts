@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import neo4j, { Driver } from 'neo4j-driver';
+import neo4j, { AuthToken, Driver } from 'neo4j-driver';
 
 let driver: Driver;
+let selectedDb: any;
 
 function previousDelimiter(editor: vscode.TextEditor): vscode.Position  {
 	const currentPosition = editor.selection.active
@@ -32,14 +33,43 @@ function nextDelimiter(editor: vscode.TextEditor): vscode.Position  {
 	return new vscode.Position(lineCount, 0)
 }
 
-export function activate(context: vscode.ExtensionContext) {
-	driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'pass'), {
-		useBigInt: true
-	});
+export async function activate(context: vscode.ExtensionContext) {
+	function getConfiguredDbs(): any[] {
+		const config = vscode.workspace.getConfiguration('neo4j-cypher-runner');
+		return config.get('databases') || [];
+	}
+
+	async function performDatabaseSelection() {
+		const databases = getConfiguredDbs() || [];
+		if (databases.length > 0) {
+			const pickedConfig = await vscode.window.showQuickPick(
+				databases.map(db => db.name),
+				{
+					canPickMany: false,
+					title: 'Select Neo4j database',
+				}
+			);
+			selectedDb = databases.find(db => db.name === pickedConfig);
+			configureDriver();
+		} else {
+			vscode.window.showWarningMessage('No database configured');
+		}
+		
+	}
+	
+	async function configureDriver () {
+		if(driver) {
+			await driver.close();
+		}
+		driver = neo4j.driver(selectedDb.url, selectedDb.authToken, { useBigInt: true });
+	}
 
 	console.log('Congratulations, your extension "neo4j-cypher-runner" is now active!');
 
 	let disposable = vscode.commands.registerCommand('neo4j-cypher-runner.run-query', async () => {
+		if (!driver) {
+			await performDatabaseSelection();
+		}
 		const maybeEditor = vscode.window.activeTextEditor;
 		const document = maybeEditor?.document;
 		if (!document || !document?.fileName.endsWith('.cypher')) {
@@ -72,7 +102,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	});
 
+	let disposableSelectDb = vscode.commands.registerCommand('neo4j-cypher-runner.select-database', performDatabaseSelection);
+
 	context.subscriptions.push(disposable);
+	context.subscriptions.push(disposableSelectDb);
 }
 
 export function deactivate() {
