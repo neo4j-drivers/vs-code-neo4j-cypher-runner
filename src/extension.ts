@@ -1,26 +1,33 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import neo4j, { Driver } from 'neo4j-driver';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+let driver: Driver ; 
+
 export function activate(context: vscode.ExtensionContext) {
-	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+	driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'pass'));
+
 	console.log('Congratulations, your extension "neo4j-cypher-runner" is now active!');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('neo4j-cypher-runner.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from neo4j-cypher-runner!');
+	let disposable = vscode.commands.registerCommand('neo4j-cypher-runner.run-query', async () => {
+		const session = driver.session();
+		try {
+			const json: string = await session.writeTransaction(async tx => {
+				const result = await tx.run('RETURN 1 AS n');
+				return JSON.stringify(result.records.map(x => x.toObject()));
+			});
+
+			vscode.window.showInformationMessage(json);
+
+		} finally {
+			session.close();
+		}
+		
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	driver.close()
+		.catch(e => console.error('Error closing driver', e));
+}
