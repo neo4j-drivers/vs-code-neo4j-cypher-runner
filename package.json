@@ -25,10 +25,24 @@
         "title": "Neo4j Cypher Runner: Select Environment"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "neo4j-cypher-runner.run-query",
+          "when": "editorLangId == cypher"
+        }
+      ]
+    },
     "configuration": [
       {
         "title": "Neo4j Cypher Runner",
         "properties": {
+          "neo4j-cypher-runner.showResultSummary": {
+            "type": "boolean",
+            "description": "Show summary object with the meta information about the query run in the result",
+            "title": "Show Result Summary",
+            "default": false
+          },
           "neo4j-cypher-runner.environments": {
             "type": "array",
             "title": "environments",
@@ -93,6 +107,9 @@
       }
     ]
   },
+  "extensionDependencies": [
+    "jakeboone02.cypher-query-language"
+  ],
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
