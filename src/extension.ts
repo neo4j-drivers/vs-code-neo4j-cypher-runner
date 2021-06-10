@@ -3,6 +3,7 @@ import neo4j, { Driver } from 'neo4j-driver';
 import ResultProvider from './result-provider';
 
 const DOC_SCHEME = 'neo4j-query-result';
+const PARAM_REGEX = /\/\*\s*:params(.*?)\*\//gs;
 
 let driver: Driver;
 let selectedEnvironment: any;
@@ -40,7 +41,7 @@ function evaluateParametersString(paramString?: string): any | undefined {
 	if (!paramString) {
 		return undefined;
 	}
-	return eval(`const neo4j = require('neo4j-driver'); (function _() { return ${paramString}; })()`);
+	return eval(`const neo4j = require('neo4j-driver'); (function _() { return ${paramString.replace('\n', ' ')}; })()`);
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -105,11 +106,25 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const textEditor = vscode.window.activeTextEditor!;
 		const document = textEditor.document;
-		const query = document.getText(new vscode.Range(previousDelimiter(textEditor), nextDelimiter(textEditor)));
+		const queryAndParams = document.getText(new vscode.Range(previousDelimiter(textEditor), nextDelimiter(textEditor)));
+		let match, matches: string[] = [];
+		while ((match = PARAM_REGEX.exec(queryAndParams)) !== null) {
+			if (match.index === PARAM_REGEX.lastIndex) {
+				PARAM_REGEX.lastIndex++;
+			}	
+			matches.push(match[1]);
+		}
+		console.log(matches);	
+		const params = matches
+			.map((params) => evaluateParametersString(params))
+			.reduce((left, right) => {
+				return {...left, ...right};
+			}, undefined)
+		console.log(params);
 		const session = driver.session({ database: selectedEnvironment.database });
 		try {
 			const result = await session.writeTransaction(async tx => {
-				const result = await tx.run(query, evaluateParametersString("{ in: neo4j.types.DateTime.fromStandardDate(new Date()) }"));
+				const result = await tx.run(queryAndParams, params);
 				const records = result.records.map(x => x.toObject());
 				const { updateStatistics, ...summary } = result.summary;
 				return { summary, records };
