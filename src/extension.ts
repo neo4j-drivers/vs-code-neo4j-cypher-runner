@@ -37,18 +37,19 @@ function nextDelimiter(editor: vscode.TextEditor): vscode.Position {
 	return new vscode.Position(lineCount, 0);
 }
 
-function extractParamsAndQuery(queryAndParams: string): { params: any | undefined, query: string} {
-	let { paramsStringList, query } = matchParamsAndQuery(queryAndParams);
+function extractQueryAndParams(queryAndParams: string): { params: any | undefined, query: string} {
+	const { query, paramsStringList } = parseQueryAndParams(queryAndParams);
 	const params = paramsStringList
 		.map(evaluateParametersString)
 		.reduce((left, right) => {
 			return { ...left, ...right };
 		}, undefined);
 
-	return { params, query };
+	return { query, params };
 
-	function matchParamsAndQuery(queryAndParams: string): { paramsStringList: string[], query: string} {
-		let match, matches: string[] = [];
+	function parseQueryAndParams(queryAndParams: string): { paramsStringList: string[], query: string} {
+		let match;
+		const matches: string[] = [];
 		let query = queryAndParams;
 		while ((match = PARAM_REGEX.exec(queryAndParams)) !== null) {
 			if (match.index === PARAM_REGEX.lastIndex) {
@@ -57,7 +58,7 @@ function extractParamsAndQuery(queryAndParams: string): { params: any | undefine
 			query = query.replace(match[0], '');
 			matches.push(match[1]);
 		}
-		return { paramsStringList: matches, query: query.trim() };
+		return { query: query.trim(), paramsStringList: matches };
 	}
 
 	function evaluateParametersString(paramString?: string): any | undefined {
@@ -131,7 +132,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const textEditor = vscode.window.activeTextEditor!;
 		const document = textEditor.document;
 		const queryAndParams = document.getText(new vscode.Range(previousDelimiter(textEditor), nextDelimiter(textEditor)));
-		const { params, query } = extractParamsAndQuery(queryAndParams);
+		const { query, params } = extractQueryAndParams(queryAndParams);
 		const session = driver.session({ database: selectedEnvironment.database });
 		try {
 			const result = await session.writeTransaction(async tx => {
