@@ -30,21 +30,64 @@
         "title": "Neo4j Cypher Runner",
         "properties": {
           "neo4j-cypher-runner.databases": {
-            "type": "list",
+            "type": "array",
             "title": "Databases",
-            "default": [
-              {
-                "name": "My DB",
-                "url": "neo4j://localhost",
+            "description": "Complete functions with their parameter signature.",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "required": ["name", "url", "authToken"],
+              "properties": {
+                "name": {
+                  "description": "The name of database shown in the db selection",
+                  "title": "name",
+                  "type":"string"
+                },
+                "url": {
+                  "description": "The uri used to connect to the db",
+                  "title": "url",
+                  "type":"string"
+                },
+                "database": {
+                  "description": "The specific database to connect to (leave it empty to use the default db or if the Neo4j versions is previous to 4.0",
+                  "title": "database",
+                  "type":"string"
+                },
                 "authToken": {
-                  "principal": "neo4j",
-                  "credentials": "pass",
-                  "scheme": "basic"
+                  "description": "The credentials used to connect to the database",
+                  "title": "auth token",
+                  "type":"object",
+                  "required": ["scheme", "principal", "credentials"],
+                  "properties": {
+                    "scheme": {
+                      "type": "string",
+                      "description": "The used for authentication. Default: basic (means user as principal and password as credentials)",
+                      "default": "basic"
+                    },
+                    "principal": {
+                      "title": "principal",
+                      "description": "User name for basic auth",
+                      "type": "string"
+                    },
+                    "credentials": {
+                      "title": "credentials",
+                      "description": "Password for basic auth",
+                      "type": "string"
+                    },
+                    "realm": {
+                      "title": "realm",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "title": "properties",
+                      "type": "object"
+                    }
+                  }
                 }
               }
+            }
 
-            ],
-            "description": "Complete functions with their parameter signature."
           }
         }
       }

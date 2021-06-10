@@ -76,9 +76,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 		
-		const textEditor = maybeEditor!
+		const textEditor = maybeEditor!;
 		const query = document.getText(new vscode.Range(previousDelimiter(textEditor), nextDelimiter(textEditor)));
-		const session = driver.session();
+		const session = driver.session({ database: selectedDb.database });
 		try {
 			const json: string = await session.writeTransaction(async tx => {
 				const result = await tx.run(query);
