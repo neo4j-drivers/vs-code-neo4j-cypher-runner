@@ -36,6 +36,13 @@ function nextDelimiter(editor: vscode.TextEditor): vscode.Position {
 	return new vscode.Position(lineCount, 0);
 }
 
+function evaluateParametersString(paramString?: string): any | undefined {
+	if (!paramString) {
+		return undefined;
+	}
+	return eval(`const neo4j = require('neo4j-driver'); (function _() { return ${paramString}; })()`);
+}
+
 export async function activate(context: vscode.ExtensionContext) {
 	const resultProvider = new ResultProvider();
 	function getConfig(): vscode.WorkspaceConfiguration {
@@ -102,7 +109,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const session = driver.session({ database: selectedEnvironment.database });
 		try {
 			const result = await session.writeTransaction(async tx => {
-				const result = await tx.run(query);
+				const result = await tx.run(query, evaluateParametersString("{ in: neo4j.types.DateTime.fromStandardDate(new Date()) }"));
 				const records = result.records.map(x => x.toObject());
 				const { updateStatistics, ...summary } = result.summary;
 				return { summary, records };
