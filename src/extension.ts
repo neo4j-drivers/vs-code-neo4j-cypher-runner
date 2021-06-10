@@ -52,16 +52,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function performEnvironmentSelection() {
-		const enviroments = getConfiguredEnvironments();
-		if (enviroments.length > 0) {
+		const environments = getConfiguredEnvironments();
+		if (environments.length > 0) {
 			const pickedConfig = await vscode.window.showQuickPick(
-				enviroments.map(env => env.name),
+				environments.map(env => env.name),
 				{
 					canPickMany: false,
 					title: 'Select Neo4j Enviroment',
 				}
 			);
-			selectedEnvironment = enviroments.find(db => db.name === pickedConfig);
+			selectedEnvironment = environments.find(db => db.name === pickedConfig);
 			configureDriver();
 		} else {
 			vscode.window.showErrorMessage('No environment configured');
