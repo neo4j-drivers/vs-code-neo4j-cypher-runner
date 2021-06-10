@@ -37,11 +37,35 @@ function nextDelimiter(editor: vscode.TextEditor): vscode.Position {
 	return new vscode.Position(lineCount, 0);
 }
 
-function evaluateParametersString(paramString?: string): any | undefined {
-	if (!paramString) {
-		return undefined;
+function extractParamsAndQuery(queryAndParams: string): { params: any | undefined, query: string} {
+	let { paramsStringList, query } = matchParamsAndQuery(queryAndParams);
+	const params = paramsStringList
+		.map(evaluateParametersString)
+		.reduce((left, right) => {
+			return { ...left, ...right };
+		}, undefined);
+
+	return { params, query };
+
+	function matchParamsAndQuery(queryAndParams: string): { paramsStringList: string[], query: string} {
+		let match, matches: string[] = [];
+		let query = queryAndParams;
+		while ((match = PARAM_REGEX.exec(queryAndParams)) !== null) {
+			if (match.index === PARAM_REGEX.lastIndex) {
+				PARAM_REGEX.lastIndex++;
+			}
+			query = query.replace(match[0], '');
+			matches.push(match[1]);
+		}
+		return { paramsStringList: matches, query: query.trim() };
 	}
-	return eval(`const neo4j = require('neo4j-driver'); (function _() { return ${paramString.replace('\n', ' ')}; })()`);
+
+	function evaluateParametersString(paramString?: string): any | undefined {
+		if (!paramString) {
+			return undefined;
+		}
+		return eval(`const neo4j = require('neo4j-driver'); (function _() { return ${paramString.trim()}; })()`);
+	}
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -107,24 +131,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		const textEditor = vscode.window.activeTextEditor!;
 		const document = textEditor.document;
 		const queryAndParams = document.getText(new vscode.Range(previousDelimiter(textEditor), nextDelimiter(textEditor)));
-		let match, matches: string[] = [];
-		while ((match = PARAM_REGEX.exec(queryAndParams)) !== null) {
-			if (match.index === PARAM_REGEX.lastIndex) {
-				PARAM_REGEX.lastIndex++;
-			}	
-			matches.push(match[1]);
-		}
-		console.log(matches);	
-		const params = matches
-			.map((params) => evaluateParametersString(params))
-			.reduce((left, right) => {
-				return {...left, ...right};
-			}, undefined)
-		console.log(params);
+		const { params, query } = extractParamsAndQuery(queryAndParams);
 		const session = driver.session({ database: selectedEnvironment.database });
 		try {
 			const result = await session.writeTransaction(async tx => {
-				const result = await tx.run(queryAndParams, params);
+				const result = await tx.run(query, params);
 				const records = result.records.map(x => x.toObject());
 				const { updateStatistics, ...summary } = result.summary;
 				return { summary, records };
