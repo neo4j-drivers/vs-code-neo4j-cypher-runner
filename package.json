@@ -11,7 +11,7 @@
   ],
   "activationEvents": [
     "onCommand:neo4j-cypher-runner.run-query",
-    "onCommand:neo4j-cypher-runner.select-database"
+    "onCommand:neo4j-cypher-runner.select-environment"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -21,18 +21,18 @@
         "title": "Neo4j Cypher Runner: Run Query"
       },
       {
-        "command": "neo4j-cypher-runner.select-database",
-        "title": "Neo4j Cypher Runner: Select Database"
+        "command": "neo4j-cypher-runner.select-environment",
+        "title": "Neo4j Cypher Runner: Select Environment"
       }
     ],
     "configuration": [
       {
         "title": "Neo4j Cypher Runner",
         "properties": {
-          "neo4j-cypher-runner.databases": {
+          "neo4j-cypher-runner.environments": {
             "type": "array",
-            "title": "Databases",
-            "description": "Complete functions with their parameter signature.",
+            "title": "environments",
+            "description": "The database environment to connect",
             "minItems": 1,
             "uniqueItems": true,
             "items": {
@@ -50,7 +50,7 @@
                   "type":"string"
                 },
                 "database": {
-                  "description": "The specific database to connect to (leave it empty to use the default db or if the Neo4j versions is previous to 4.0",
+                  "description": "The specific database to connect to (leave it empty to use the default db or if the Neo4j versions is previous to 4.0)",
                   "title": "database",
                   "type":"string"
                 },
