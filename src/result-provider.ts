@@ -6,7 +6,7 @@ export default class ResultProvider implements TextDocumentContentProvider {
   private cursor: number;
 
   constructor() {
-    this.results = new Map<string, string>();  
+    this.results = new Map<string, string>();
     this.cursor = 0;
   }
 
