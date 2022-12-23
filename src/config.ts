@@ -11,6 +11,7 @@ export interface Environment {
 export interface Config {
   readonly environments: Environment[]
   readonly showResultSummary: boolean
+  readonly queryDelimiter: string
 }
 
 export function getConfig(key: string = 'neo4j-cypher-runner'): Config {
@@ -22,6 +23,9 @@ export function getConfig(key: string = 'neo4j-cypher-runner'): Config {
     },
     get showResultSummary(): boolean {
       return rawConfig.get('showResultSummary') || false;
+    },
+    get queryDelimiter(): string {
+      return rawConfig.get('queryDelimiter') || '####'
     }
   };
 }

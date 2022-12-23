@@ -7,10 +7,10 @@ import ResultProvider from "./result-provider";
 
 export async function performRunQuery(this: ExtensionState) {
   const environment: Environment = await this.getOrPutIfAbsent('environment', () => performEnvironmentSelection.apply(this));
-
+  const delimiter = getConfig().queryDelimiter
   const textEditor = window.activeTextEditor!;
   const document = textEditor.document;
-  const queryAndParams = document.getText(new Range(previousDelimiter(textEditor), nextDelimiter(textEditor)));
+  const queryAndParams = document.getText(new Range(previousDelimiter(delimiter, textEditor), nextDelimiter(delimiter, textEditor)));
   const { query, params: parameters } = extractQueryAndParams(queryAndParams);
   const result = await this.queryExecutor.execute({ ...environment, query, parameters })
     .catch(e => e);
@@ -19,32 +19,28 @@ export async function performRunQuery(this: ExtensionState) {
 }
 
 
-function previousDelimiter(editor: TextEditor): Position {
+function previousDelimiter(delimiter: string, editor: TextEditor): Position {
   const currentPosition = editor.selection.active;
   for (let i = currentPosition.line; i >= 0; i--) {
     const line = editor.document.lineAt(i);
-    if (line.text.startsWith('####')) {
-      console.log(`Section starts at (${i + 1},0)`);
+    if (line.text.startsWith(delimiter)) {
       return new Position(i + 1, 0);
     }
 
   }
-  console.log(`Section starts at (0,0)`);
   return new Position(0, 0);
 }
 
-function nextDelimiter(editor: TextEditor): Position {
+function nextDelimiter(delimiter: string, editor: TextEditor): Position {
   const currentPosition = editor.selection.active;
   const document = editor.document;
   const lineCount = document.lineCount;
   for (let i = currentPosition.line + 1; i < lineCount; i++) {
     const line = document.lineAt(i);
-    if (line.text.startsWith('####')) {
-      console.log(`Section ends at (${i},0)`);
+    if (line.text.startsWith(delimiter)) {
       return new Position(i, 0);
     }
   }
-  console.log(`Section ends at (${lineCount},0)`);
   return new Position(lineCount, 0);
 }
 

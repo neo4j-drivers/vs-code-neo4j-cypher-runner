@@ -43,6 +43,12 @@
             "title": "Show Result Summary",
             "default": false
           },
+          "neo4j-cypher-runner.queryDelimiter": {
+            "type": "string",
+            "description": "Sequence of characters which delimits the boundaries of a query in cypher file.",
+            "title": "Query Delimiter",
+            "default": "####"
+          },
           "neo4j-cypher-runner.environments": {
             "type": "array",
             "title": "environments",
